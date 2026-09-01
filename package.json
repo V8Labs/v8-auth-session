@@ -1,0 +1,30 @@
+{
+  "name": "v8-auth-session",
+  "version": "1.0.0",
+  "description": "Llavero de sesión del ecosistema V8 para el navegador. Mecanismo, no identidad: el llavero es un parámetro.",
+  "license": "UNLICENSED",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node scripts/test-llavero.mjs",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.1",
+    "typescript": "^5.9.3"
+  }
+}
