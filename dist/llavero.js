@@ -548,6 +548,12 @@ export function crearLlavero(opts) {
         limpiarTodo,
         edadDeSesion,
         nombres: { sesion: KEY, fallos: FALLOS_KEY, nacida: NACIDA_KEY, hintCorreo: HINT_KEY },
+        cookies: {
+            leer: (nombre) => decodificar(readCookie(nombre)),
+            escribir: (nombre, valor, maxAge = MAX_AGE) => escribirCookie(nombre, encodeURIComponent(valor), maxAge),
+            borrar: clearCookie,
+            MAX_AGE,
+        },
         _marcarResultadoRefresh: marcarResultadoRefresh,
     };
 }

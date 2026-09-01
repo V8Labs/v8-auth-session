@@ -91,6 +91,19 @@ export type Llavero = {
   edadDeSesion: () => EdadSesion | null;
   /** Los nombres derivados, para que la app no los adivine ni los reescriba. */
   nombres: { sesion: string; fallos: string; nacida: string; hintCorreo: string | null };
+  /**
+   * Primitivas de cookie con EXACTAMENTE los atributos de la sesión (`domain`,
+   * `secure`, `samesite`, `path`). Se exportan porque cosas como el hint de correo
+   * necesitan viajar entre subdominios igual que la sesión: si cada app copiara los
+   * cuatro atributos, un día divergirían y el hint dejaría de cruzar sin que nadie
+   * lo note. Una sola fuente para los atributos.
+   */
+  cookies: {
+    leer: (nombre: string) => string | null;
+    escribir: (nombre: string, valor: string, maxAge?: number) => void;
+    borrar: (nombre: string) => void;
+    MAX_AGE: number;
+  };
   /** Solo para el banco de pruebas. No lo use la app. */
   _marcarResultadoRefresh: (status: number | null) => void;
 };
@@ -576,6 +589,13 @@ export function crearLlavero(opts: LlaveroOpts): Llavero {
     limpiarTodo,
     edadDeSesion,
     nombres: { sesion: KEY, fallos: FALLOS_KEY, nacida: NACIDA_KEY, hintCorreo: HINT_KEY },
+    cookies: {
+      leer: (nombre) => decodificar(readCookie(nombre)),
+      escribir: (nombre, valor, maxAge = MAX_AGE) =>
+        escribirCookie(nombre, encodeURIComponent(valor), maxAge),
+      borrar: clearCookie,
+      MAX_AGE,
+    },
     _marcarResultadoRefresh: marcarResultadoRefresh,
   };
 }

@@ -60,12 +60,22 @@ function montarNavegador() {
      *  código nunca produciría. Una cookie NO es un campo privado: cualquiera en el
      *  dominio la escribe, y el problema vive justo en los valores que no generamos. */
     sembrarCruda: (k, v) => cookies.set(k, v),
+    /**
+     * Bloquea `document.cookie` (modo privado, WebViews) y DEVUELVE cómo restaurarlo.
+     * ⚠ Devolver el restaurador no es prolijidad: la primera versión de este doble no
+     * lo hacía, y el caso que bloqueaba las cookies **contaminaba en silencio todos
+     * los casos que corrieran después** — un test posterior fallaba por una razón que
+     * no tenía nada que ver con lo que probaba. Un doble que no se puede deshacer
+     * convierte al banco en dependiente del orden.
+     */
     bloquearCookies: () => {
+      const original = Object.getOwnPropertyDescriptor(globalThis.document, 'cookie');
       Object.defineProperty(globalThis.document, 'cookie', {
         configurable: true,
         get() { return ''; },
         set() { throw new Error('cookies bloqueadas'); },
       });
+      return () => Object.defineProperty(globalThis.document, 'cookie', original);
     },
   };
 }
@@ -470,7 +480,7 @@ check('contador de chunks absurdo no cuelga la pestaña (tope duro)', Date.now()
 // 40 · Con cookies que TIRAN, todo degrada sin propagar hacia auth-js
 nav.reset();
 lv = nuevo();
-nav.bloquearCookies();
+const restaurar = nav.bloquearCookies();
 reventó = false;
 try {
   lv.storage.setItem(KEY, sesion(3600));
@@ -478,7 +488,32 @@ try {
   lv.storage.removeItem(KEY);
   lv.limpiarTodo();
 } catch { reventó = true; }
+restaurar();
 check('con cookies que TIRAN, todo degrada sin propagar', !reventó);
+
+
+console.log('\n── Primitivas de cookie (mismos atributos que la sesión) ──');
+
+// 41 · Roundtrip del hint de correo, con encoding
+nav.reset();
+lv = nuevo();
+lv.cookies.escribir('v8_last_email', 'a+b@correo.co');
+check('las primitivas de cookie hacen roundtrip con encoding',
+  lv.cookies.leer('v8_last_email') === 'a+b@correo.co');
+
+// 42 · Un valor envenenado por un tercero devuelve null, no revienta
+nav.reset();
+lv = nuevo();
+nav.sembrarCruda('v8_last_email', '%zz');
+reventó = false;
+let leido;
+try { leido = lv.cookies.leer('v8_last_email'); } catch { reventó = true; }
+check('un valor de cookie envenenado devuelve null, no revienta', !reventó && leido === null);
+
+// 43 · borrar deja la cookie fuera
+lv.cookies.escribir('v8_last_email', 'x@y.co');
+lv.cookies.borrar('v8_last_email');
+check('borrar saca la cookie', lv.cookies.leer('v8_last_email') === null);
 
 // ── Helpers que necesitan el scope del módulo ────────────────────────────────
 function expira(raw) { try { return JSON.parse(raw).expires_at; } catch { return null; } }

@@ -91,6 +91,19 @@ export type Llavero = {
         nacida: string;
         hintCorreo: string | null;
     };
+    /**
+     * Primitivas de cookie con EXACTAMENTE los atributos de la sesión (`domain`,
+     * `secure`, `samesite`, `path`). Se exportan porque cosas como el hint de correo
+     * necesitan viajar entre subdominios igual que la sesión: si cada app copiara los
+     * cuatro atributos, un día divergirían y el hint dejaría de cruzar sin que nadie
+     * lo note. Una sola fuente para los atributos.
+     */
+    cookies: {
+        leer: (nombre: string) => string | null;
+        escribir: (nombre: string, valor: string, maxAge?: number) => void;
+        borrar: (nombre: string) => void;
+        MAX_AGE: number;
+    };
     /** Solo para el banco de pruebas. No lo use la app. */
     _marcarResultadoRefresh: (status: number | null) => void;
 };
