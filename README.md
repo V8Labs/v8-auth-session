@@ -129,6 +129,17 @@ vale, esa comodidad no paga la superficie. Misma regla que `v8-auth-jwt`.
 
 | versión | SHA | notas |
 |---|---|---|
-| `1.0.0` | _(se completa al publicar)_ | primera; unifica las 3 copias + arreglo del 01-sep |
+| `1.0.0` | `1dbeabcf84da3178d11c02c3cc502a86dd8f0460` | primera; unifica las 3 copias + arreglo del 01-sep |
+
+Consumidores al 2026-09-01, los tres fijados a `1dbeabc`:
+`app_V8_NOTIFICATIONS` (`v8auth`) · `app_V8_DIALOGUE` (`v8auth`) · `app_V8_BOLETIN`
+(`v8boletinauth`).
+
+El banco viaja con el paquete, así que cada app puede correr la red de seguridad contra el
+código que realmente usa:
+
+```
+node node_modules/v8-auth-session/scripts/test-llavero.mjs
+```
 
 Actualizar exige un acto deliberado. En un módulo de credenciales, eso es una virtud.
