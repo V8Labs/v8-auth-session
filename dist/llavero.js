@@ -547,6 +547,11 @@ export function crearLlavero(opts) {
         conSalidaExplicita,
         limpiarTodo,
         edadDeSesion,
+        sellarConAccessToken: (jwt) => {
+            if (typeof jwt !== 'string' || jwt === '')
+                return;
+            sellarNacimiento(JSON.stringify({ access_token: jwt }));
+        },
         nombres: { sesion: KEY, fallos: FALLOS_KEY, nacida: NACIDA_KEY, hintCorreo: HINT_KEY },
         cookies: {
             leer: (nombre) => decodificar(readCookie(nombre)),

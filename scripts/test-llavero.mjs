@@ -515,6 +515,29 @@ lv.cookies.escribir('v8_last_email', 'x@y.co');
 lv.cookies.borrar('v8_last_email');
 check('borrar saca la cookie', lv.cookies.leer('v8_last_email') === null);
 
+
+console.log('\n── Sellado explícito desde el arranque (boletín) ──');
+
+// 46 · Una sesión restaurada desde la cookie no pasa por setItem: sin el sellado
+// explícito no tendría edad, y por lo tanto nunca avisaría la renovación.
+nav.reset();
+l = conReloj(t0);
+l.sellarConAccessToken(jwtCon('sBoot'));
+check('sellarConAccessToken sella una sesión restaurada', l.edadDeSesion()?.dias === 0);
+
+// 47 · Es idempotente: re-sellar el MISMO session_id no reinicia la edad
+l = conReloj(t0 + 20 * DIA);
+l.sellarConAccessToken(jwtCon('sBoot'));
+check('re-sellar el mismo session_id NO reinicia la edad', l.edadDeSesion()?.dias === 20);
+
+// 48 · Un token basura no rompe ni sella nada
+nav.reset();
+l = conReloj(t0);
+reventó = false;
+try { l.sellarConAccessToken('no-es-un-jwt'); l.sellarConAccessToken(null); } catch { reventó = true; }
+check('un access token basura no revienta ni inventa un sello',
+  !reventó && l.edadDeSesion() === null);
+
 // ── Helpers que necesitan el scope del módulo ────────────────────────────────
 function expira(raw) { try { return JSON.parse(raw).expires_at; } catch { return null; } }
 function leerCookieSesion() {

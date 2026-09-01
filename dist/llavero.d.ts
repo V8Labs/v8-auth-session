@@ -84,6 +84,18 @@ export type Llavero = {
     limpiarTodo: () => void;
     /** Cuánto lleva viva la sesión. `null` si no hay sello — y eso NO es un error. */
     edadDeSesion: () => EdadSesion | null;
+    /**
+     * Sella el nacimiento a partir de un access token suelto.
+     *
+     * Normalmente no hace falta: `setItem` ya sella en cada guardado. Existe para el
+     * arranque — una sesión **restaurada desde la cookie** entra por `getItem` y no
+     * pasa por `setItem`, así que sin esto no se sellaría hasta el primer refresco.
+     * `app_V8_BOLETIN` lo llama explícitamente en su `main.tsx` por esa razón.
+     *
+     * Es idempotente: el mismo `session_id` no re-sella (la edad se cuenta desde el
+     * login, no desde el último arranque).
+     */
+    sellarConAccessToken: (jwt: string | null | undefined) => void;
     /** Los nombres derivados, para que la app no los adivine ni los reescriba. */
     nombres: {
         sesion: string;
