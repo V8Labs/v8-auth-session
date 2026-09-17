@@ -125,3 +125,34 @@ export function codigoDeFallo(e: unknown): string | null {
   if (status !== 401 && status !== 403) return null;
   return fallo.error_code ?? null;
 }
+
+/**
+ * ⭐ Buscar `code` en un diccionario de mensajes SIN el crash del prototipo.
+ *
+ * ── DE DÓNDE VIENE (LORD, nocturno 2026-09-16, sobre `app_V8_NOTIFICATIONS`) ──
+ * `motivoDeSalida()` (`Login.tsx`) hacía `ERROR_MESSAGES[code] ?? generico` sobre
+ * un `code` que sale de `codigoDeFallo()` de arriba y viaja en la cookie
+ * `v8_motivo_salida` — que vive en `.v8labs.co` y **la escribe cualquier host del
+ * dominio**. El `??` no atrapa las claves del PROTOTIPO: con `code === 'toString'`,
+ * `ERROR_MESSAGES['toString']` devuelve una FUNCIÓN (no `null`, no `undefined`), el
+ * fallback no corre, y esa función llega a `setError` → React tira *"Functions are
+ * not valid as a React child"* → **pantalla en blanco EN EL LOGIN**, sin forma de
+ * entrar a arreglarlo.
+ *
+ * No era teórico ni de un atacante externo: con el incidente de Cloudflare de la
+ * misma semana —alguien ajeno tuvo el panel y pudo apuntar subdominios— pasó de
+ * "nadie lo haría" a "alguien pudo". Un valor que entra desde una cookie de
+ * dominio compartido se valida, aunque todo lo que la escribe hoy sea de casa.
+ *
+ * ── QUÉ SE COMPARTE ACÁ Y QUÉ NO ──
+ * El diccionario de mensajes (`ERROR_MESSAGES`) es COPY — cada app elige su tono
+ * ("no sos operador" vs "tu cuenta no está en la base") y eso sigue siendo suyo.
+ * Lo que es mecanismo, y por eso vive acá: la FORMA segura de mirar adentro de
+ * ESE diccionario con una clave que no controlás. Cada app trae su propio mapa;
+ * ninguna reescribe cómo se lo consulta.
+ */
+export function buscarMotivo<T>(diccionario: Readonly<Record<string, T>>, code: string | null): T | null {
+  if (code === null) return null;
+  const valor = Object.hasOwn(diccionario, code) ? diccionario[code] : null;
+  return valor ?? null;
+}

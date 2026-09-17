@@ -34,5 +34,6 @@ export {
   VEREDICTOS_QUE_AVISAN,
   esVeredictoDeExpulsion,
   codigoDeFallo,
+  buscarMotivo,
 } from './veredicto';
 export type { FalloDeMe } from './veredicto';

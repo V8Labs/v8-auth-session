@@ -37,9 +37,17 @@ await build({
   entryPoints: [join(raiz, 'src/veredicto.ts')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
 });
-const { esVeredictoDeExpulsion, VEREDICTOS_QUE_CIERRAN, VEREDICTOS_QUE_AVISAN, codigoDeFallo } =
-  await import(pathToFileURL(out).href);
-unlinkSync(out);
+// `finally` y no un `unlinkSync` al hilo (LORD, review 2026-09-16, portado desde
+// `app_V8_NOTIFICATIONS` commit `07b84fb`): si el módulo falla al evaluarse —un
+// error de sintaxis en `veredicto.ts`— el import tira y el temporal queda
+// huérfano en disco, una fuga por cada corrida rota.
+let mod;
+try {
+  mod = await import(pathToFileURL(out).href);
+} finally {
+  unlinkSync(out);
+}
+const { esVeredictoDeExpulsion, VEREDICTOS_QUE_CIERRAN, VEREDICTOS_QUE_AVISAN, codigoDeFallo, buscarMotivo } = mod;
 
 /** La lógica VIEJA, la que causó el bug. Solo para el modo --demo-bug. */
 const logicaVieja = (e) => e?.status === 401 || e?.status === 403;
@@ -134,6 +142,41 @@ if (JSON.stringify(ra) === JSON.stringify(avisan)) {
 const solape = rc.filter((c) => ra.includes(c));
 if (solape.length === 0) { ok++; console.log('  ✓ las dos listas no se solapan'); }
 else { fail++; console.log(`  ✗ ${solape.join(', ')} está en las DOS listas`); }
+
+// ── buscarMotivo: el `code` sale de una cookie de dominio compartido ────────
+// Portado desde `app_V8_NOTIFICATIONS` (LORD, review 2026-09-16, commit
+// `07b84fb`): ese `motivoDeSalida()` hacía `ERROR_MESSAGES[code] ?? generico`,
+// y con `code === 'toString'` el lookup devuelve una FUNCIÓN, no null — React
+// se rompe pintándola. Se prueba la FUNCIÓN REAL del módulo, no una réplica:
+// una réplica prueba que la LECCIÓN se entendió, no que el CÓDIGO la aplica.
+if (!demo) {
+  console.log('\n── ¿buscarMotivo sobrevive a una clave del prototipo? ──');
+  const DICC = { NO_OPERADOR: 'no sos operador', INACTIVO: 'cuenta inactiva' };
+  const HOSTILES = ['toString', 'constructor', 'valueOf', 'hasOwnProperty'];
+  for (const code of HOSTILES) {
+    const real = buscarMotivo(DICC, code);
+    if (real === null) { ok++; console.log(`  ✓ "${code}" → null, no una función`); }
+    else { fail++; console.log(`  ✗ "${code}" devolvió ${typeof real} — no es seguro pintarlo`); }
+  }
+  if (buscarMotivo(DICC, 'NO_OPERADOR') === 'no sos operador') {
+    ok++; console.log('  ✓ un código real sigue mapeando bien');
+  } else { fail++; console.log('  ✗ se rompió el mapeo de un código real'); }
+  if (buscarMotivo(DICC, 'CODIGO_DEL_FUTURO') === null) {
+    ok++; console.log('  ✓ un código desconocido da null (el llamador decide el genérico)');
+  } else { fail++; console.log('  ✗ un código desconocido no dio null'); }
+  if (buscarMotivo(DICC, null) === null) {
+    ok++; console.log('  ✓ code=null no explota');
+  } else { fail++; console.log('  ✗ code=null no dio null'); }
+
+  // Y el banco tiene que saber fallar: la versión ingenua SÍ tiene que romperse
+  // con las mismas claves, o esto no estaría probando nada.
+  const ingenuo = (code) => DICC[code] ?? 'genérico';
+  if (HOSTILES.some((c) => typeof ingenuo(c) !== 'string')) {
+    ok++; console.log('  ✓ ⭐ y el lookup con `??` SÍ se rompe (este banco sabe fallar)');
+  } else {
+    fail++; console.log('  ✗ el lookup con `??` no se rompió — entonces esto no prueba nada');
+  }
+}
 
 console.log(fail === 0 ? `\n✅ ${ok}/${ok}` : `\n❌ ${fail} de ${ok + fail} fallaron`);
 if (demo) {
