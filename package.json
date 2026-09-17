@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node scripts/test-llavero.mjs",
+    "test": "node scripts/test-llavero.mjs && node scripts/test-veredicto.mjs && node scripts/test-veredicto.mjs --demo-bug",
     "prepare": "npm run build"
   },
   "devDependencies": {

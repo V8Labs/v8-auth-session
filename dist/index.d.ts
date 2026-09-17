@@ -26,3 +26,5 @@
  */
 export { crearLlavero } from './llavero';
 export type { Llavero, LlaveroOpts, EdadSesion, Almacen, Reloj } from './llavero';
+export { VEREDICTOS_QUE_CIERRAN, VEREDICTOS_QUE_AVISAN, esVeredictoDeExpulsion, codigoDeFallo, } from './veredicto';
+export type { FalloDeMe } from './veredicto';

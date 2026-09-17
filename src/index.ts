@@ -26,3 +26,13 @@
  */
 export { crearLlavero } from './llavero';
 export type { Llavero, LlaveroOpts, EdadSesion, Almacen, Reloj } from './llavero';
+
+// ── El veredicto: ¿un fallo de tu endpoint de identidad cierra la sesión? ──
+// Ver `src/veredicto.ts` para la regla completa y por qué existe.
+export {
+  VEREDICTOS_QUE_CIERRAN,
+  VEREDICTOS_QUE_AVISAN,
+  esVeredictoDeExpulsion,
+  codigoDeFallo,
+} from './veredicto';
+export type { FalloDeMe } from './veredicto';

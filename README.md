@@ -102,10 +102,38 @@ inalcanzable»**. Ahora sí: solo cuenta como fallo lo que el servidor **juzgó*
 > puede desalojar nunca es el bucle infinito que dejó a Andy afuera el 15-ago. **Ante la
 > duda se cuenta, nunca se protege de más.**
 
+## El veredicto — ¿un fallo de `/me` cierra la sesión?
+
+Módulo hermano del llavero, mismo archivo desde el 2026-09-16. Distingue **rechazo** de
+**no pude verificar** un paso más arriba en el flujo: no en el storage, en la respuesta del
+endpoint de identidad (`/me` de Mind).
+
+```ts
+import { esVeredictoDeExpulsion, codigoDeFallo } from 'v8-auth-session';
+
+try {
+  const op = await getMe();
+} catch (e) {
+  if (esVeredictoDeExpulsion(e)) await salir();       // NO_OPERADOR · INACTIVO · NO_GMAIL
+  // Cualquier otro caso (hipo de red, AUTH_NO_DISPONIBLE, SIN_PERSONA…) CONSERVA la
+  // sesión. `codigoDeFallo(e)` da el motivo para pintarlo en pantalla.
+}
+```
+
+Nació el 2026-09-15: Andy perdía la sesión todos los días porque un `401` de `/me` se leía
+como un solo significado cuando en realidad son tres — y uno de ellos lleva literalmente el
+texto *"tu sesión sigue siendo válida"*. Detalle completo, con cada línea citada:
+`core_v8_auth/docs/un-401-no-es-un-veredicto.md`.
+
+⚠ Es la **única** parte de este paquete que conoce el contrato de `/me` de Mind — el resto
+es agnóstico de quién está del otro lado. No es una grieta: esa política es del ecosistema
+entero (los cuatro consumidores reciben los mismos códigos del mismo endpoint), no de una
+app — duplicarla por app fue exactamente el bug.
+
 ## Banco de pruebas
 
 ```
-npm test        # 42 casos
+npm test        # llavero + veredicto + demo-bug
 ```
 
 Se corre **antes** de tocar `getItem`/`setItem`/`removeItem`. Esta lógica dejó a Andy
